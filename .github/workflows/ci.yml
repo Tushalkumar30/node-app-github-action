@@ -33,5 +33,25 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: false
+          load: true
           tags: node-app:test
+
+      - name: Run Docker container
+        run: |
+          docker run -d \
+            --name node-app-test \
+            -p 8080:8080 \
+            node-app:test
+
+      - name: Test running container
+        run: |
+          sleep 5
+          curl --fail http://localhost:8080
+
+      - name: Show container logs
+        if: always()
+        run: docker logs node-app-test
+
+      - name: Stop Docker container
+        if: always()
+        run: docker rm -f node-app-test
