@@ -11,7 +11,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository | downcase }}
+  IMAGE_NAME: tushalkumar30/node-app-github-action
 
 jobs:
   build-test-push:
@@ -22,36 +22,26 @@ jobs:
       packages: write
 
     steps:
-      # -------------------------
       # 1. Checkout
-      # -------------------------
       - name: Checkout code
         uses: actions/checkout@v6
 
-      # -------------------------
       # 2. Node setup
-      # -------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
           node-version: 22
           cache: npm
 
-      # -------------------------
       # 3. Install dependencies
-      # -------------------------
       - name: Install dependencies
         run: npm ci
 
-      # -------------------------
       # 4. Run tests
-      # -------------------------
       - name: Run tests
         run: npm test --if-present
 
-      # -------------------------
       # 5. Login to GHCR
-      # -------------------------
       - name: Login to GitHub Container Registry
         if: github.event_name == 'push'
         uses: docker/login-action@v3
@@ -60,9 +50,7 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # -------------------------
       # 6. Build Docker image
-      # -------------------------
       - name: Build Docker image
         uses: docker/build-push-action@v7
         with:
@@ -70,9 +58,7 @@ jobs:
           load: true
           tags: node-app:test
 
-      # -------------------------
       # 7. Run Docker container
-      # -------------------------
       - name: Run Docker container
         run: |
           docker run -d \
@@ -80,31 +66,23 @@ jobs:
             -p 8080:8080 \
             node-app:test
 
-      # -------------------------
       # 8. Test container
-      # -------------------------
       - name: Test running container
         run: |
           sleep 5
           curl --fail http://localhost:8080
 
-      # -------------------------
-      # 9. Show logs if anything fails
-      # -------------------------
+      # 9. Show logs
       - name: Show container logs
         if: always()
         run: docker logs node-app-test
 
-      # -------------------------
-      # 10. Stop test container
-      # -------------------------
+      # 10. Stop container
       - name: Stop test container
         if: always()
         run: docker rm -f node-app-test
 
-      # -------------------------
       # 11. Build and push production image
-      # -------------------------
       - name: Build and push Docker image
         if: github.event_name == 'push'
         uses: docker/build-push-action@v7
